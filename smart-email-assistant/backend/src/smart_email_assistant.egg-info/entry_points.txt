@@ -1,0 +1,3 @@
+[console_scripts]
+smart-email-assistant-api = smart_email_assistant.backend.src.app:main
+smart-email-assistant-backend = smart_email_assistant.backend.src.main:main

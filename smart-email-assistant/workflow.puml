@@ -1,0 +1,53 @@
+@startuml
+skinparam handwritten true
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam defaultFontName "Cascadia Code"
+skinparam defaultFontSize 14
+
+title Smart Email Assistant Workflow
+
+actor User
+participant "Frontend (React App)" as Frontend
+participant "Backend (FastAPI App)" as Backend
+participant "Gmail API" as GmailAPI
+participant "Gemini AI" as GeminiAI
+
+User -> Frontend: Accesses Application
+Frontend -> Backend: Initiates Gmail Authentication (via /auth/gmail_auth)
+Backend -> GmailAPI: Requests OAuth Consent
+GmailAPI --> Backend: Returns Authorization Code
+Backend -> GmailAPI: Exchanges Code for Access Token
+GmailAPI --> Backend: Provides Access Token
+Backend -> Backend: Stores Credentials (via /auth/credentials_manager)
+Backend --> Frontend: Authentication Successful
+
+User -> Frontend: Requests Email List
+Frontend -> Backend: Fetches Emails (via /api/routes)
+Backend -> GmailAPI: Requests Emails (via /mail_utils/gmail_client)
+GmailAPI --> Backend: Returns Raw Emails
+Backend -> Backend: Processes Emails (via /mail_utils/email_processor)
+Backend -> Backend: Analyzes Threads (via /mail_utils/thread_analyzer)
+Backend --> Frontend: Displays Processed Emails
+
+User -> Frontend: Selects Email for Summarization
+Frontend -> Backend: Requests Email Summary (via /api/routes)
+Backend -> Backend: Calls Summarizer (via /ai/summarizer)
+Backend -> GeminiAI: Sends Email Content for Summarization (via /ai/gemini_client)
+GeminiAI --> Backend: Returns Summary
+Backend --> Frontend: Displays Summary
+
+User -> Frontend: Requests Reply Generation
+Frontend -> Backend: Requests Reply (via /api/routes)
+Backend -> Backend: Calls Reply Generator (via /ai/reply_generator)
+Backend -> GeminiAI: Sends Context for Reply Generation (via /ai/gemini_client)
+GeminiAI --> Backend: Returns Generated Reply
+Backend --> Frontend: Displays Generated Reply
+
+User -> Frontend: Sends Reply
+Frontend -> Backend: Sends Email (via /api/routes)
+Backend -> GmailAPI: Sends Email (via /mail_utils/gmail_client)
+GmailAPI --> Backend: Email Sent Confirmation
+Backend --> Frontend: Email Sent Confirmation
+
+@enduml
