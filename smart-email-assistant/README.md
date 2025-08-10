@@ -1,0 +1,164 @@
+# Smart Email Assistant Tool
+
+This project aims to build a comprehensive Smart Email Assistant Tool that integrates with the Gmail API to automatically process, summarize, and generate reply drafts for emails using the Gemini API.
+
+## Project Structure
+
+```
+smart-email-assistant/
+├── backend/
+│   ├── src/
+│   │   ├── auth/
+│   │   │   ├── __init__.py
+│   │   │   ├── gmail_auth.py          # OAuth2 implementation
+│   │   │   └── credentials_manager.py  # Secure credential handling
+│   │   ├── email/
+│   │   │   ├── __init__.py
+│   │   │   ├── gmail_client.py        # Gmail API wrapper
+│   │   │   ├── email_processor.py     # Email parsing & processing
+│   │   │   └── thread_analyzer.py     # Thread & reply detection
+│   │   ├── ai/
+│   │   │   ├── __init__.py
+│   │   │   ├── gemini_client.py       # Gemini API integration
+│   │   │   ├── summarizer.py          # Email summarization
+│   │   │   └── reply_generator.py     # Smart reply generation
+│   │   ├── utils/
+│   │   │   ├── __init__.py
+│   │   │   ├── data_processor.py      # Data formatting
+│   │   │   ├── csv_exporter.py        # CSV export functionality
+│   │   │   └── rate_limiter.py        # API rate limiting
+│   │   ├── api/
+│   │   │   ├── __init__.py
+│   │   │   └── routes.py              # FastAPI/Flask routes
+│   │   ├── config/
+│   │   │   ├── __init__.py
+│   │   │   └── settings.py            # Configuration management
+│   │   └── main.py                    # Main application entry
+│   ├── requirements.txt
+│   └── .env.example
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── AuthHandler.tsx        # Authentication handler component
+│   │   │   ├── EmailList.tsx          # Email display component
+│   │   │   ├── Footer.tsx             # Footer component
+│   │   │   └── Header.tsx             # Header component
+│   │   ├── App.tsx
+│   │   ├── index.css
+│   │   └── main.tsx
+│   ├── package.json
+│   └── tailwind.config.js
+├── docker-compose.yml                 # Optional containerization
+├── README.md
+└── setup.py
+```
+
+## Backend Setup and Usage
+
+### Prerequisites
+
+- Python 3.9+
+- Google Cloud Project with Gmail API and Gemini API enabled.
+- OAuth 2.0 Client ID for Desktop app type.
+
+### Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-username/smart-email-assistant.git
+    cd smart-email-assistant/backend
+    ```
+
+2.  **Create a Python virtual environment and activate it:**
+    ```bash
+    python -m venv venv
+    # On Windows
+    .\venv\Scripts\activate
+    # On macOS/Linux
+    source venv/bin/activate
+    ```
+
+3.  **Install dependencies:**
+    ```bash
+    pip install -e .
+    ```
+
+### Configuration
+
+1.  **Google API Credentials:**
+    *   Go to the Google Cloud Console.
+    *   Navigate to "APIs & Services" > "Credentials".
+    *   Create an OAuth 2.0 Client ID. Choose "Desktop app" as the application type.
+    *   Download the `client_secret.json` file.
+    *   Rename this file to `credentials.json` and place it in `smart-email-assistant/backend/src/config/`.
+
+2.  **Gemini API Key:**
+    *   Obtain a Gemini API key from Google AI Studio.
+    *   Create a `.env` file in the `smart-email-assistant/backend/` directory (next to `requirements.txt`) and add your Gemini API key:
+        ```
+        GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+        ```
+    *   Refer to `.env.example` for the correct format.
+
+### Running the Backend (CLI for testing Phase 1 & API for Phase 2)
+
+#### Running the Core Backend (CLI)
+
+To test the core backend functionality (Phase 1), you can run the `main.py` script directly. This will fetch emails, process them, generate summaries and replies, and export the results to a CSV file.
+
+1.  **Navigate to the backend directory:**
+    ```bash
+    cd smart-email-assistant/backend
+    ```
+
+2.  **Run the main script:**
+    ```bash
+    python -m smart_email_assistant.backend.src.main
+    ```
+    The first time you run this, a browser window will open asking you to authenticate with your Google account. Follow the prompts to grant access. A `token.json` file will be created in `smart-email-assistant/backend/src/config/` to store your refresh token.
+
+#### Running the FastAPI Backend (API)
+
+To start the FastAPI server (Phase 2), which exposes the email processing and export functionalities via REST endpoints:
+
+1.  **Navigate to the backend directory:**
+    ```bash
+    cd smart-email-assistant/backend
+    ```
+
+2.  **Run the FastAPI application:**
+    ```bash
+    uvicorn smart_email_assistant.backend.src.app:app --host 0.0.0.0 --port 8000 --reload
+    ```
+    (Note: `--reload` is useful for development, remove for production.)
+
+    Alternatively, if you installed the package in editable mode (`pip install -e .`), you can use the console script:
+    ```bash
+    smart-email-assistant-api
+    ```
+
+3.  **Access API Documentation:**
+    Once the server is running, you can access the interactive API documentation (Swagger UI) at:
+    `http://localhost:8000/docs`
+    or ReDoc documentation at:
+    `http://localhost:8000/redoc`
+
+    You can use these interfaces to test the `/api/health` and `/api/process_emails` endpoints.
+
+3.  **Output:**
+    *   Processed email data will be exported to a CSV file in the `smart-email-assistant/backend/output/` directory (e.g., `emails_YYYYMMDD_HHMMSS.csv`).
+    *   Console logs will show the progress of email fetching, processing, summarization, and reply generation.
+
+### Troubleshooting
+
+*   **`FileNotFoundError: credentials.json`**: Ensure you have downloaded `client_secret.json` from Google Cloud Console, renamed it to `credentials.json`, and placed it in `smart-email-assistant/backend/src/config/`.
+*   **`ValueError: GEMINI_API_KEY not found`**: Make sure you have created the `.env` file in `smart-email-assistant/backend/` and set `GEMINI_API_KEY` correctly.
+*   **Authentication Issues**: If `token.json` becomes invalid, delete it and re-run the script to re-authenticate.
+*   **API Rate Limits**: The application includes a basic rate limiter. If you encounter `429 Too Many Requests` errors, you might need to adjust the `rate_limit` and `interval` in `smart-email-assistant/backend/src/utils/rate_limiter.py` or `smart-email-assistant/backend/src/main.py` (where `RateLimiter` is initialized).
+
+## Next Steps (Phases 2, 3, 4)
+
+*   **Phase 2: API Layer**: Implement FastAPI endpoints for the backend services.
+*   **Phase 3: Frontend**: Develop the React web interface to interact with the API.
+*   **Phase 4: Enhancements**: Add Dockerization, caching, logging, and comprehensive testing.
